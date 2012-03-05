@@ -9,11 +9,7 @@ public class Configuration {
 	public static int finalYear;
 	public static int windowOfPrediction;
 	
-	public static String assembleGraphPath(int year){
-		return Paths.GraphPath + year + ".graphml";
-	}
-	
-	
+		
 	/*public static int OFFSET = 0;
 	public static int ANO_MINIMO = 1992;
 	public static int ANO_MAXIMO = 2010;
