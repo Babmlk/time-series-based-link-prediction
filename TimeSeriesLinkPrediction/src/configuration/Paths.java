@@ -1,12 +1,18 @@
 package configuration;
 
+import java.io.File;
+
 public class Paths {
 	
 	private static String graphsPath(){return "graphs/" + Configuration.category + "/";};
 	private static String seriesPath(){return "series/" + Configuration.category + "/";};
 	private static String scoresPath(){return "scores/" + Configuration.category + "/";};
 	
-	
+	public void createDirectories(){
+		(new File(graphsPath())).mkdir();
+		(new File(seriesPath())).mkdir();
+		(new File(scoresPath())).mkdir();
+	}
 	
 	public static String assembleGraphsPath(int year){
 		return graphsPath() + year + ".graphml";
