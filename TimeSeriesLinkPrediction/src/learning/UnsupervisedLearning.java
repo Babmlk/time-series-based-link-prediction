@@ -12,6 +12,8 @@ import forecasting.Forecaster;
 import framework.FrameworkUtils;
 
 public class UnsupervisedLearning extends LearningMethod{
+	
+	private final static String ID = "unsupervised";
 
 	private FTSNS s;
 	private Frame predictionFrame;
@@ -32,15 +34,15 @@ public class UnsupervisedLearning extends LearningMethod{
 	}
 	
 	public void saveTimeSeries() throws IOException{				
-		FrameworkUtils.saveTimeSeries("unsupervised", this.metrics, this.pairsOfNodes, this.s, this.predictionFrame);
+		FrameworkUtils.saveTimeSeries(ID, this.metrics, this.pairsOfNodes, this.s, this.predictionFrame);
 	}
 	
 	public void saveTraditionalScores() throws IOException {
-		FrameworkUtils.saveTraditionalScores("unsupervised", false, metrics, pairsOfNodes, this.s, predictionFrame);
+		FrameworkUtils.saveTraditionalScores(ID, false, this.metrics, this.pairsOfNodes, this.s, predictionFrame);
 	}
 	
 	public void savePredictedScores() throws IOException{
-		//FrameworkUtils.savePredictedScores("unsupervised", metrics, pairsOfNodes, this.s, predictionFrame);
+		FrameworkUtils.savePredictedScores(ID, false, this.metrics, this.forecasters);
 	}
 	
 	public ResultsBoard computeAbsoluteResults(){
