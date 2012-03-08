@@ -7,10 +7,12 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedList;
 
 import metric.SimilarityMetric;
 import model.FTSNS;
+import model.FeatureVector;
 import model.Frame;
 import model.Graph;
 import model.PairOfNodes;
@@ -24,7 +26,8 @@ import forecasting.Forecaster;
 import format.Formarter;
 
 public class FrameworkUtils {
-	
+
+	private final static String TRADITIONAL_METHOD = "traditional";
 	private final static String HYBRID_METHOD = "hybrid";
 
 	public static ArrayList<Graph> readSnapshots(){
@@ -114,7 +117,7 @@ public class FrameworkUtils {
 		}
 		WekaUtils.writeWekaHeader(writer, relation, attributes);
 	}
-	
+
 	private static void writeWekaHeaderInHybridScoreFile(String id, String method, BufferedWriter writer, ArrayList<SimilarityMetric> metrics) throws IOException{
 		String relation = id + "-" + method; 
 		ArrayList<String> attributes = new ArrayList<String>();
@@ -122,7 +125,7 @@ public class FrameworkUtils {
 			attributes.add(metric.getName());
 		}
 		for(SimilarityMetric metric : metrics){
-			attributes.add(metric.getName() + "-traditional");
+			attributes.add(metric.getName() + "-" + TRADITIONAL_METHOD);
 		}
 		WekaUtils.writeWekaHeader(writer, relation, attributes);
 	}
@@ -130,7 +133,7 @@ public class FrameworkUtils {
 	public static void saveTraditionalScores(String id, boolean wekaFormat, ArrayList<SimilarityMetric> metrics, ArrayList<PairOfNodes> pairsOfNodes, FTSNS s, Frame predictionFrame) throws IOException{
 		BufferedWriter writer = new BufferedWriter(new FileWriter(Paths.assembleScoresPath(id, "traditional", wekaFormat)));
 		if(wekaFormat){
-			writeWekaHeaderInScoreFile(id, "traditional", writer, metrics);
+			writeWekaHeaderInScoreFile(id, TRADITIONAL_METHOD, writer, metrics);
 		}
 
 		for(PairOfNodes pair : pairsOfNodes){
@@ -162,16 +165,18 @@ public class FrameworkUtils {
 		BufferedReader readerClasses = new BufferedReader(new FileReader(Paths.assembleSeriesPath(id, "classes")));
 
 		String line;
-		int i = 0;
-		while((line = readers.get(i).readLine()) != null){
-			double[] values = Formarter.stringToDoubleArray(line,"\t");
-			int classAttribute = Integer.parseInt(readerClasses.readLine());
-			timeSeries.get(i).add(new TimeSeries(values,classAttribute));
-			i++;
-			if(i >= readers.size()){
-				i = 0;
-			}
-		}		
+		for(int i = 0; i < metrics.size(); i++){
+			while((line = readers.get(i).readLine()) != null){
+				double[] values = Formarter.stringToDoubleArray(line,"\t");
+				int classAttribute = Integer.parseInt(readerClasses.readLine());
+				timeSeries.get(i).add(new TimeSeries(values,classAttribute));
+			}	
+		}
+		
+		for(BufferedReader reader : readers){
+			reader.close();
+		}
+		
 		return timeSeries;		
 	}
 
@@ -198,7 +203,7 @@ public class FrameworkUtils {
 					double score = forecaster.forecast(series.getObservedValues());
 					writers.get(j).write(score + "\t");
 				}
-				writers.get(0).write(classAttribute + "\n");
+				writers.get(j).write(classAttribute + "\n");
 			}
 		}
 
@@ -207,7 +212,30 @@ public class FrameworkUtils {
 			writer.close();
 		}		
 	}	
-	
+
+	private static ArrayList<FeatureVector> readScores(String id, String method, boolean wekaFormat) throws IOException{
+		//Array com os forecasters e dentro de cada um os scores gerados pelos pares de nós.
+		ArrayList<FeatureVector> featureVectors = new ArrayList<FeatureVector>();
+
+		BufferedReader reader = new BufferedReader(new FileReader(Paths.assembleScoresPath(id, method, wekaFormat)));
+
+		String line;
+		if(wekaFormat){
+			while(!(line = reader.readLine()).equals("@DATA") ){}
+		}
+
+		while((line = reader.readLine()) != null){
+			double[] values = Formarter.stringToDoubleArray(line,"\t");
+			int classAttribute = (int) values[values.length - 1];
+			values = Arrays.copyOfRange(values, 0, values.length - 1);
+			featureVectors.add(new FeatureVector(values,classAttribute));				
+		}	
+		
+		reader.close();
+
+		return featureVectors;		
+	}
+
 	//Método exclusivo da técnica supervisionada (hybrid feature vector)
 	public static void saveHybridScores(String id, ArrayList<SimilarityMetric> metrics, ArrayList<Forecaster> forecasters) throws IOException{
 		ArrayList<BufferedWriter> writers = new ArrayList<BufferedWriter>();
@@ -216,12 +244,23 @@ public class FrameworkUtils {
 			writeWekaHeaderInHybridScoreFile(id, forecaster.getDescription(), writer, metrics);
 			writers.add(writer);
 		}
-		
-		//Para cada forecaster
-		//Ler scores preditos
-		//Ler scores tradicionais
-		//escrever ambos num arquivo correspondente
-		
+
+		ArrayList<FeatureVector> traditionalFeatureVectors = readScores(id, TRADITIONAL_METHOD, true);
+
+		for(int i = 0; i < forecasters.size(); i++){
+			Forecaster forecaster = forecasters.get(i);
+			ArrayList<FeatureVector> predictedFeatureVectors = readScores(id, forecaster.getDescription(), true);
+			for(int j = 0; j < predictedFeatureVectors.size(); j++){
+				FeatureVector pFeatureVector = predictedFeatureVectors.get(j);
+				FeatureVector tFeatureVector = traditionalFeatureVectors.get(j);
+				String pScores = Formarter.doubleArrayToString(pFeatureVector.getScores(), "\t");
+				String tScores = Formarter.doubleArrayToString(tFeatureVector.getScores(), "\t");
+				int classAttribute = pFeatureVector.getClassAttribute();
+				writers.get(i).write(pScores + tScores + classAttribute + "\n");
+			}
+
+		}
+
 		for(BufferedWriter writer : writers){
 			writer.flush();
 			writer.close();
