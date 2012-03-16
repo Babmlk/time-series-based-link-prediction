@@ -3,6 +3,7 @@ package forecasting;
 public class Average extends MovingAverage{
 	
 	public final static String NAME = "Av";
+	public final static String FULL_NAME = "Average (Av)";
 
 	public Average(){
 		super(0);
@@ -22,6 +23,11 @@ public class Average extends MovingAverage{
 	@Override
 	public String getDescription() {
 		return NAME;
+	}
+	
+	@Override
+	public String getFullName() {
+		return FULL_NAME;
 	}
 	
 }

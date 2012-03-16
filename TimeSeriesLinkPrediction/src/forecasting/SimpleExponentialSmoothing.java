@@ -8,6 +8,7 @@ import net.sourceforge.openforecast.models.DoubleExponentialSmoothingModel;
 public class SimpleExponentialSmoothing implements Forecaster{
 	
 	public final static String NAME = "SES";
+	public final static String FULL_NAME = "Simple Exponential Smoothing (SES)";
 	
 	public SimpleExponentialSmoothing(){
 		
@@ -39,5 +40,10 @@ public class SimpleExponentialSmoothing implements Forecaster{
 	@Override
 	public String getDescription() {
 		return NAME;
+	}
+	
+	@Override
+	public String getFullName() {
+		return FULL_NAME;
 	}
 }

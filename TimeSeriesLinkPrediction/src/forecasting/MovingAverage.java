@@ -8,6 +8,7 @@ import net.sourceforge.openforecast.models.MovingAverageModel;
 public class MovingAverage implements Forecaster{
 	
 	public final static String NAME = "MA";
+	public final static String FULL_NAME = "Moving Average (MA)";
 	
 	protected int n;
 	
@@ -42,5 +43,10 @@ public class MovingAverage implements Forecaster{
 	public String getDescription() {
 		return NAME + "(" + this.n + ")";
 	}		
+	
+	@Override
+	public String getFullName() {
+		return FULL_NAME + " [n = " +  n + "]";
+	}
 	
 }
