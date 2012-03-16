@@ -13,6 +13,7 @@ import framework.FrameworkUtils;
 
 public class UnsupervisedLearning extends LearningMethod{
 	
+	public final static String FULL_NAME = "Unsupervised Learning";
 	private final static String ID = "unsupervised";
 
 	private FTSNS s;
@@ -45,12 +46,16 @@ public class UnsupervisedLearning extends LearningMethod{
 		FrameworkUtils.savePredictedScores(ID, false, this.metrics, this.forecasters);
 	}
 	
-	public ResultsBoard computeAbsoluteResults(){
-		return null;
+	public ResultsBoard computeAbsoluteResults() throws Exception{
+		return FrameworkUtils.resultsForUnsupervisedLearning(ID, this.metrics, this.forecasters, 1);
 	} 
 	
-	public ResultsBoard computeRelativeResults(int folds){
-		return null;
+	public ResultsBoard computeRelativeResults(int folds) throws Exception{
+		return FrameworkUtils.resultsForUnsupervisedLearning(ID, this.metrics, this.forecasters, folds);
+	}
+	
+	public String getFullName(){
+		return FULL_NAME;
 	}
 	
 	

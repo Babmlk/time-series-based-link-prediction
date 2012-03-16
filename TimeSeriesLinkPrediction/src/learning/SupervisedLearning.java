@@ -13,6 +13,7 @@ import framework.FrameworkUtils;
 
 public class SupervisedLearning extends LearningMethod{
 
+	public final static String FULL_NAME = "Supervised Learning";
 	private final static String VALIDATION_ID = "supervised-validation";
 	private final static String TRAINING_ID = "supervised-training";
 	
@@ -62,11 +63,15 @@ public class SupervisedLearning extends LearningMethod{
 		FrameworkUtils.saveHybridScores(VALIDATION_ID, this.metrics, this.forecasters);
 	}
 	
-	public ResultsBoard computeAbsoluteResults(){
-		return null;
+	public ResultsBoard computeAbsoluteResults() throws Exception{
+		return FrameworkUtils.resultsForSupervisedLearning(TRAINING_ID, VALIDATION_ID, this.forecasters, 1);
 	} 
 	
-	public ResultsBoard computeRelativeResults(int folds){
-		return null;
+	public ResultsBoard computeRelativeResults(int folds) throws Exception{
+		return FrameworkUtils.resultsForSupervisedLearning(TRAINING_ID, VALIDATION_ID, this.forecasters, folds);
+	}
+	
+	public String getFullName(){
+		return FULL_NAME;
 	}
 }
