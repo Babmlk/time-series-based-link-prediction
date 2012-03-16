@@ -8,6 +8,7 @@ import net.sourceforge.openforecast.models.SimpleExponentialSmoothingModel;
 public class LinearExponentialSmoothing implements Forecaster {
 	
 	public final static String NAME = "LES";
+	public final static String FULL_NAME = "Linear Exponential Smoothing (LES)";
 	
 	public LinearExponentialSmoothing(){
 		
@@ -41,5 +42,9 @@ public class LinearExponentialSmoothing implements Forecaster {
 		return NAME;
 	}
 	
+	@Override
+	public String getFullName() {
+		return FULL_NAME;
+	}
 	
 }

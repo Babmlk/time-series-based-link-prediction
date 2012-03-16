@@ -8,6 +8,7 @@ import net.sourceforge.openforecast.models.RegressionModel;
 public class LinearRegression implements Forecaster{
 	
 	public final static String NAME = "LR";
+	public final static String FULL_NAME = "Linear Regression (LR)";
 	
 	public LinearRegression(){
 		
@@ -39,5 +40,10 @@ public class LinearRegression implements Forecaster{
 	@Override
 	public String getDescription() {
 		return NAME;
+	}
+	
+	@Override
+	public String getFullName() {
+		return FULL_NAME;
 	}
 }
