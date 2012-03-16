@@ -4,9 +4,9 @@ public class ResultsBoard {
 
 	private String[] lineNames;
 	private String[] columnNames;
-	private double[][] results;
+	private Result[][] results;
 	
-	public ResultsBoard(String[] lineNames, String[] columnNames, double[][] results){
+	public ResultsBoard(String[] lineNames, String[] columnNames, Result[][] results){
 		this.lineNames = lineNames;
 		this.columnNames = columnNames;
 		this.results = results;
@@ -20,7 +20,7 @@ public class ResultsBoard {
 		return columnNames;
 	}
 
-	public double[][] getResults() {
+	public Result[][] getResults() {
 		return results;
 	}
 		
