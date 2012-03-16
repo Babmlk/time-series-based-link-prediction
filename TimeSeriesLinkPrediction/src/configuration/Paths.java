@@ -8,8 +8,7 @@ public class Paths {
 	private static String seriesPath(){return "series/" + Configuration.category + "/";};
 	private static String scoresPath(){return "scores/" + Configuration.category + "/";};
 	
-	public void createDirectories(){
-		(new File(graphsPath())).mkdir();
+	public static void createDirectories(){
 		(new File(seriesPath())).mkdir();
 		(new File(scoresPath())).mkdir();
 	}
@@ -30,6 +29,23 @@ public class Paths {
 			path = scoresPath() + "-" + id + "-" + method + "[w = " + Configuration.windowOfPrediction + "].txt";
 		}
 		return path;
+	}
+	
+	public static int[] yearsAvaliable(){
+		File folder = new File(graphsPath());
+	    File[] files = folder.listFiles();
+	    int[] years = new int[files.length];
+	    int i = 0;
+
+	    for (File file : files) {
+	      if (file.isFile()) {
+	    	  String filename = file.getName();
+	    	  int beginIndex = filename.lastIndexOf("-") + 1;
+	    	  int endIndex = filename.lastIndexOf(".");
+	    	  years[i++] = Integer.parseInt(filename.substring(beginIndex, endIndex));
+	      } 
+	    }
+	    return years;
 	}
 			
 }
