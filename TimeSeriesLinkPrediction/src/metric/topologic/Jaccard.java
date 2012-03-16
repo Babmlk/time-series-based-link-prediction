@@ -5,6 +5,7 @@ import java.util.HashSet;
 public class Jaccard extends CommonNeighbors{
 	
 	private final static String NAME = "JC";
+	private final static String FULL_NAME = "Jaccard's Coefficient (JC)";
 
 	public double getScore(Integer v1, Integer v2){
 		//União de vizinhos de v1 e v2
@@ -20,4 +21,8 @@ public class Jaccard extends CommonNeighbors{
 	public String getName() {
 		return NAME;
 	}	
+	
+	public String getFullName(){
+		return FULL_NAME;
+	}
 }

@@ -7,6 +7,7 @@ import metric.SimilarityMetric;
 public class AdamicAdar extends SimilarityMetric{
 	
 	private final static String NAME = "AA";
+	private final static String FULL_NAME = "Adamic/Adar (AA)";
 
 	public double getScore(Integer v1, Integer v2){
 		double score = 0;
@@ -22,4 +23,7 @@ public class AdamicAdar extends SimilarityMetric{
 		return NAME;
 	}	
 	
+	public String getFullName(){
+		return FULL_NAME;
+	}
 }
