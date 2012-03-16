@@ -25,11 +25,13 @@ public abstract class LearningMethod {
 	public ArrayList<Forecaster> getForecasters() {
 		return forecasters;
 	}
-
+	
+	public abstract void init(Frame[] frames, SimilarityMetric[] metrics, Forecaster[] forecasters);
 	public abstract void saveTimeSeries() throws IOException;
 	public abstract void saveTraditionalScores() throws IOException;
 	public abstract void savePredictedScores() throws IOException;
-	public abstract ResultsBoard computeAbsoluteResults();	
-	public abstract ResultsBoard computeRelativeResults(int folds);
+	public abstract ResultsBoard computeAbsoluteResults() throws Exception;	
+	public abstract ResultsBoard computeRelativeResults(int folds) throws Exception;
+	public abstract String getFullName();
 	
 }
