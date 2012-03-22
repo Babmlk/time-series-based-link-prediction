@@ -1,20 +1,39 @@
 package controller;
 
+import java.util.ArrayList;
+
 import learning.LearningMethod;
+import log.States;
 import metric.SimilarityMetric;
 import model.Frame;
-import model.ResultsBoard;
 import configuration.Configuration;
 import forecasting.Forecaster;
 import framework.FrameworkUtils;
 
 public class Facade {
 	
-	private SimilarityMetric[] metrics;
-	private Forecaster[] forecasters;
-	private LearningMethod[] learningMethods;
+	private ArrayList<SimilarityMetric> metrics;
+	private ArrayList<Forecaster> forecasters;
+	private ArrayList<LearningMethod> learningMethods;
 	private boolean statistics;
 	private int folds;
+	private States states;
+	
+	public Facade(){
+		this.states = new States();
+	}
+
+	public ArrayList<LearningMethod> getLearningMethods() {
+		return learningMethods;
+	}
+
+	public boolean isStatistics() {
+		return statistics;
+	}
+	
+	public States getStates(){
+		return states;
+	}
 
 	public void setDataBaseInfo(String category, int beginYear, int endYear){
 		Configuration.category = category;
@@ -22,39 +41,49 @@ public class Facade {
 		Configuration.endYear = endYear;
 	}
 	
-	public void setFrameworkSettings(int windowOfPrediction, SimilarityMetric[] metrics, Forecaster[] forecasters){
+	public void setFrameworkSettings(int windowOfPrediction, ArrayList<SimilarityMetric> metrics, ArrayList<Forecaster> forecasters){
 		Configuration.windowOfPrediction = windowOfPrediction;
 		this.metrics = metrics;
 		this.forecasters = forecasters;
 	}
 	
-	public void setLearningMethods(LearningMethod[] learningMethods, boolean statistics, int folds){
+	public void setLearningMethods(ArrayList<LearningMethod> learningMethods, boolean statistics, int folds){
 		this.learningMethods = learningMethods;
 		this.statistics = statistics;
 		this.folds = folds;
 	}
 	
 	public void go() throws Exception{
-		ResultsBoard[] absoluteResults, relativeResults;
-		absoluteResults = new ResultsBoard[this.learningMethods.length];
-		relativeResults = null;
-		if(this.statistics){
-			relativeResults = new ResultsBoard[this.learningMethods.length];
-		}
-		Frame[] frames = FrameworkUtils.buildFrames(FrameworkUtils.readSnapshots());
-		for(int i = 0; i < this.learningMethods.length; i++){
-			LearningMethod learning = this.learningMethods[i];
+		System.out.println("Building Frames...");
+		ArrayList<Frame> frames = FrameworkUtils.buildFrames(FrameworkUtils.readSnapshots());
+		System.out.println(frames.size() + " frames.");
+		for(int i = 0; i < this.learningMethods.size(); i++){
+			LearningMethod learning = this.learningMethods.get(i);
+			
+			System.out.println("Initializing learning method...");
 			learning.init(frames, this.metrics, this.forecasters);
+			
+			//this.states.setMainState("Generating time series...");
+			System.out.println("Generating time series...");
 			learning.saveTimeSeries();
+			
+			//this.states.setMainState("Calculating traditional scores...");
+			System.out.println("Calculating traditional scores...");
 			learning.saveTraditionalScores();
+			
+			//this.states.setMainState("Calculating predicted scores...");
+			System.out.println("Calculating predicted scores...");
 			learning.savePredictedScores();
-			absoluteResults[i] = learning.computeAbsoluteResults();
+			
+			//this.states.setMainState("Computing absolute results...");
+			System.out.println("Computing absolute results...");
+			learning.computeAbsoluteResults();
+			
 			if(this.statistics){
-				relativeResults[i] = learning.computeRelativeResults(this.folds);
+				//this.states.setMainState("Computing relative results...");
+				System.out.println("Computing relative results...");
+				learning.computeRelativeResults(this.folds);
 			}
 		}
-	}
-	
-	
-	
+	}	
 }
