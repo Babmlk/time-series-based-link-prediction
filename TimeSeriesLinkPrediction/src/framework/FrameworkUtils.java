@@ -8,6 +8,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Random;
 
@@ -41,18 +43,18 @@ import configuration.Configuration;
 import configuration.Paths;
 import edu.uci.ics.jung.io.GraphIOException;
 import forecasting.Forecaster;
-import format.Formarter;
+import format.Formater;
 
 public class FrameworkUtils {
 
 	private final static String TRADITIONAL_METHOD = "traditional";
 	private final static String HYBRID_METHOD = "hybrid";
 
-	public static Graph[] readSnapshots(){
-		Graph[] graphs = new Graph[Configuration.endYear - Configuration.beginYear + 1];
+	public static ArrayList<Graph> readSnapshots(){
+		ArrayList<Graph> graphs = new ArrayList<Graph>();
 		try {
 			for(int i = Configuration.beginYear; i <= Configuration.endYear; i++){
-				graphs[i - Configuration.beginYear] = GraphReader.lerGrafoML(Paths.assembleGraphsPath(i));
+				graphs.add(GraphReader.lerGrafoML(Paths.assembleGraphsPath(i)));
 			}	
 		} catch (FileNotFoundException e) {
 			// TODO Auto-generated catch block
@@ -63,32 +65,52 @@ public class FrameworkUtils {
 		}
 		return graphs;
 	}	
+	
+	//Adicionar vertices faltantes aos frames
+	/*public static ArrayList<Frame> formatFrames(ArrayList<Frame> frames){
+		Frame lastFrame = frames.remove(frames.size() - 1);//Prediction frame
+		//Todos os vértices dos frames de S
+		Collection<Integer> allVertices = new HashSet<Integer>();
+		for(Frame frame : frames){
+			allVertices.addAll(new HashSet<Integer>(frame.getContent().getVertices()));			
+		}
+		//Adicionar vértices faltandes aos frames
+		frames.add(lastFrame);
+		for(Frame frame : frames){
+			frame.getContent().complete(allVertices);			
+		}
+		return frames;
+	}*/
 
-	public static Frame[] buildFrames(Graph[] snapshots){
+	public static ArrayList<Frame> buildFrames(ArrayList<Graph> snapshots){
 		LinkedList<Frame> frames = new LinkedList<Frame>();		
 		ArrayList<Graph> temp = new ArrayList<Graph>();
-		int lastIndex = snapshots.length - 1;
+		int lastIndex = snapshots.size() - 1;
 		int i = lastIndex;
 
-		while(lastIndex - Configuration.windowOfPrediction >= 0){
-			while(i >= lastIndex - Configuration.windowOfPrediction){
-				temp.add(snapshots[i]);
+		while(lastIndex - Configuration.windowOfPrediction + 1 >= 0){
+			while(i > lastIndex - Configuration.windowOfPrediction){
+				temp.add(snapshots.get(i));
 				i--;
 			}
 			frames.addFirst(new Frame(temp));
 			temp.clear();
 			lastIndex = i;
 		}
-		return (Frame[]) frames.toArray();
+				
+		return new ArrayList<Frame>(frames);
 	}
 
-	public static ArrayList<PairOfNodes> getTestablePairOfNodes(Graph trainingNetwork, Graph testNetwork){
+	public static ArrayList<PairOfNodes> getTestablePairOfNodes(Graph trainingNetwork){
 		ArrayList<PairOfNodes> pairsOfNodes = new ArrayList<PairOfNodes>();
-		ArrayList<Integer> vertices = new ArrayList<Integer>(testNetwork.getVertices());
+		ArrayList<Integer> vertices = new ArrayList<Integer>(trainingNetwork.getVertices());
 		for(int i = 0; i < vertices.size(); i++){
-			for(int j = 0; j < vertices.size(); j++){
-				if(trainingNetwork.hasCommonNeighbor(i, j)){
-					pairsOfNodes.add(new PairOfNodes(i, j));
+			for(int j = i + 1; j < vertices.size(); j++){
+				int v1 = vertices.get(i);
+				int v2 = vertices.get(j);
+				//Só analisar nós a dois passos de distância na rede de treino
+				if(!trainingNetwork.isNeighbor(v1, v2) && trainingNetwork.hasCommonNeighbor(v1, v2)){
+					pairsOfNodes.add(new PairOfNodes(vertices.get(i), vertices.get(j)));
 				}
 			}
 		}
@@ -96,6 +118,7 @@ public class FrameworkUtils {
 	}
 
 	public static void saveTimeSeries(String id, ArrayList<SimilarityMetric> metrics, ArrayList<PairOfNodes> pairsOfNodes, FTSNS s, Frame predictionFrame) throws IOException{
+		Paths.createSeriesDirectory();
 		ArrayList<BufferedWriter> writersSeries = new ArrayList<BufferedWriter>();
 		for(SimilarityMetric metric : metrics){
 			writersSeries.add(new BufferedWriter(new FileWriter(Paths.assembleSeriesPath(id,metric.getName()))));
@@ -114,7 +137,8 @@ public class FrameworkUtils {
 					metric.init(frame.getContent());
 					double score = metric.getScore(v1, v2);
 					writersSeries.get(i).write(score + "\t");					
-				}				
+				}	
+				writersSeries.get(i).write("\n");
 			}			
 			writerClasses.write(classAttribute + "\n");						
 		}
@@ -149,6 +173,7 @@ public class FrameworkUtils {
 	}
 
 	public static void saveTraditionalScores(String id, boolean wekaFormat, ArrayList<SimilarityMetric> metrics, ArrayList<PairOfNodes> pairsOfNodes, FTSNS s, Frame predictionFrame) throws IOException{
+		Paths.createScoresDirectory();
 		BufferedWriter writer = new BufferedWriter(new FileWriter(Paths.assembleScoresPath(id, TRADITIONAL_METHOD, wekaFormat)));
 		if(wekaFormat){
 			writeWekaHeaderInScoreFile(id, TRADITIONAL_METHOD, writer, metrics);
@@ -183,10 +208,13 @@ public class FrameworkUtils {
 		BufferedReader readerClasses = new BufferedReader(new FileReader(Paths.assembleSeriesPath(id, "classes")));
 
 		String line;
-		for(int i = 0; i < metrics.size(); i++){
-			while((line = readers.get(i).readLine()) != null){
-				double[] values = Formarter.stringToDoubleArray(line,"\t");
-				int classAttribute = Integer.parseInt(readerClasses.readLine());
+		while((line = readers.get(0).readLine()) != null){
+			double[] values = Formater.stringToDoubleArray(line,"\t");
+			int classAttribute = Integer.parseInt(readerClasses.readLine());
+			timeSeries.get(0).add(new TimeSeries(values,classAttribute));
+			for(int i = 1; i < metrics.size(); i++){
+				line = readers.get(i).readLine();
+				values = Formater.stringToDoubleArray(line,"\t");
 				timeSeries.get(i).add(new TimeSeries(values,classAttribute));
 			}	
 		}
@@ -199,6 +227,7 @@ public class FrameworkUtils {
 	}
 
 	public static void savePredictedScores(String id, boolean wekaFormat, ArrayList<SimilarityMetric> metrics, ArrayList<Forecaster> forecasters) throws IOException{
+		Paths.createScoresDirectory();
 		ArrayList<BufferedWriter> writers = new ArrayList<BufferedWriter>();
 		for(Forecaster forecaster : forecasters){
 			BufferedWriter writer = new BufferedWriter(new FileWriter(Paths.assembleScoresPath(id, forecaster.getDescription(), wekaFormat)));
@@ -212,16 +241,17 @@ public class FrameworkUtils {
 		int numberOfSeries = timeSeries.get(0).size();
 
 		for(int i = 0; i < forecasters.size(); i++){
+			Forecaster forecaster = forecasters.get(i);
+			System.out.println("Forecasting model: " + forecaster.getDescription());
 			for(int j = 0; j < numberOfSeries; j++){
 				int classAttribute = 0;
 				for(int k = 0; k < metrics.size(); k++){
 					TimeSeries series = timeSeries.get(k).get(j);
 					classAttribute = series.getClassAttribute();
-					Forecaster forecaster = forecasters.get(j);
 					double score = forecaster.forecast(series.getObservedValues());
-					writers.get(j).write(score + "\t");
+					writers.get(i).write(score + "\t");
 				}
-				writers.get(j).write(classAttribute + "\n");
+				writers.get(i).write(classAttribute + "\n");
 			}
 		}
 
@@ -243,7 +273,7 @@ public class FrameworkUtils {
 		}
 
 		while((line = reader.readLine()) != null){
-			double[] values = Formarter.stringToDoubleArray(line,"\t");
+			double[] values = Formater.stringToDoubleArray(line,"\t");
 			int classAttribute = (int) values[values.length - 1];
 			values = Arrays.copyOfRange(values, 0, values.length - 1);
 			featureVectors.add(new FeatureVector(values,classAttribute));				
@@ -271,10 +301,10 @@ public class FrameworkUtils {
 			for(int j = 0; j < predictedFeatureVectors.size(); j++){
 				FeatureVector pFeatureVector = predictedFeatureVectors.get(j);
 				FeatureVector tFeatureVector = traditionalFeatureVectors.get(j);
-				String pScores = Formarter.doubleArrayToString(pFeatureVector.getScores(), "\t");
-				String tScores = Formarter.doubleArrayToString(tFeatureVector.getScores(), "\t");
+				String pScores = Formater.doubleArrayToString(pFeatureVector.getScores(), "\t");
+				String tScores = Formater.doubleArrayToString(tFeatureVector.getScores(), "\t");
 				int classAttribute = pFeatureVector.getClassAttribute();
-				writers.get(i).write(pScores + tScores + classAttribute + "\n");
+				writers.get(i).write(pScores + "\t" + tScores + "\t" + classAttribute + "\n");
 			}
 
 		}
@@ -324,9 +354,15 @@ public class FrameworkUtils {
 	private static Result wekaSVM(String trainingFilename, String validationFilename, int folds) throws Exception{
 		DataSource source = new DataSource(trainingFilename);
 		Instances trainingData = source.getDataSet();
+		if (trainingData.classIndex() == -1){
+			trainingData.setClassIndex(trainingData.numAttributes() - 1);
+		}
 		
 		source = new DataSource(validationFilename);
 		Instances validationData = source.getDataSet();
+		if (validationData.classIndex() == -1){
+			validationData.setClassIndex(validationData.numAttributes() - 1);
+		}
 		
 		SpreadSubsample ss = new SpreadSubsample();
 		ss.setDistributionSpread(1);
@@ -345,6 +381,7 @@ public class FrameworkUtils {
 		if(folds > 1){
 			result = wekaRelativeResult(smo, trainingData, validationData, folds);
 		}else{
+			smo.buildClassifier(trainingData);
 			result = wekaAbsoluteResult(smo, trainingData, validationData);
 		}		
 		
