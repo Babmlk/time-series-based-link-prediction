@@ -68,10 +68,10 @@ public class CrossValidation {
 			}
 			
 			for(int j = 0; j < positiveClassByFold; j++){
-				foldInstances.add(this.pInstances.remove(j));
+				foldInstances.add(this.pInstances.remove(0));
 			}
 			for(int j = 0; j < negativeClassByFold; j++){
-				foldInstances.add(this.nInstances.remove(j));
+				foldInstances.add(this.nInstances.remove(0));
 			}
 			
 			Collections.sort(foldInstances, new Comparator<ROCPattern>() {  

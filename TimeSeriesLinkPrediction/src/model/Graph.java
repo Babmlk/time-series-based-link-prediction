@@ -19,7 +19,7 @@ public class Graph extends UndirectedSparseGraph<Integer, Edge>{
 		this.addEdges(edges);
 	}
 
-	public void addVertices(ArrayList<Integer> vertices){
+	public void addVertices(Collection<Integer> vertices){
 		for (Integer vertice : vertices) {
 			this.addVertex(vertice);
 		}
@@ -31,9 +31,9 @@ public class Graph extends UndirectedSparseGraph<Integer, Edge>{
 		}
 	}	
 	
-	public void removeVertices(ArrayList<Integer> vertices){
-		for (Integer vertice : vertices) {
-			this.removeVertex(vertice);
+	public void removeVertices(Collection<Integer> vertices){
+		for (Integer vertex : vertices) {
+			this.removeVertex(vertex);
 		}
 	}
 	
@@ -66,6 +66,22 @@ public class Graph extends UndirectedSparseGraph<Integer, Edge>{
 		}
 
 		return union;
+	}
+	
+	public void complete(Collection<Integer> vertices){
+		for(Integer vertex : vertices){
+			if(!this.containsVertex(vertex)){
+				this.addVertex(vertex);
+			}
+		}
+	}
+	
+	public boolean isNeighbor(Integer v1, Integer v2){
+		boolean temp = false;
+		if(this.containsVertex(v1) && this.containsVertex(v2)){
+			temp = super.isNeighbor(v1, v2);
+		}
+		return temp;
 	}
 	
 }
