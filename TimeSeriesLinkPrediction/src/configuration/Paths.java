@@ -8,25 +8,28 @@ public class Paths {
 	private static String seriesPath(){return "series/" + Configuration.category + "/";};
 	private static String scoresPath(){return "scores/" + Configuration.category + "/";};
 	
-	public static void createDirectories(){
+	public static void createSeriesDirectory(){
 		(new File(seriesPath())).mkdir();
-		(new File(scoresPath())).mkdir();
 	}
 	
+	public static void createScoresDirectory(){
+		(new File(scoresPath())).mkdir();		
+	}	
+	
 	public static String assembleGraphsPath(int year){
-		return graphsPath() + year + ".graphml";
+		return graphsPath() + Configuration.category + "-" + year + ".graphml";
 	}
 	
 	public static String assembleSeriesPath(String id, String metric){
-		return seriesPath() + "-" + id + "-" + metric + "[w = " + Configuration.windowOfPrediction + "].txt";
+		return seriesPath() + id + "-" + metric + "[w = " + Configuration.windowOfPrediction + "].txt";
 	}
 	
 	public static String assembleScoresPath(String id, String method, boolean wekaFormat){
 		String path;
 		if(wekaFormat){
-			path = scoresPath() + "-" + id + "-" + method + "[w = " + Configuration.windowOfPrediction + "].arff";
+			path = scoresPath() + id + "-" + method + "[w = " + Configuration.windowOfPrediction + "].arff";
 		}else{
-			path = scoresPath() + "-" + id + "-" + method + "[w = " + Configuration.windowOfPrediction + "].txt";
+			path = scoresPath() + id + "-" + method + "[w = " + Configuration.windowOfPrediction + "].txt";
 		}
 		return path;
 	}

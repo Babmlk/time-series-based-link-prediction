@@ -1,6 +1,7 @@
 package configuration;
 
 import learning.LearningMethod;
+import learning.SupervisedLearning;
 import learning.UnsupervisedLearning;
 import metric.SimilarityMetric;
 import metric.topologic.AdamicAdar;
@@ -19,12 +20,13 @@ import forecasting.SimpleExponentialSmoothing;
 
 public class Configuration {
 	
-	public static final String[] categoryListDiscription = {"hep-lat:arXiv","hep-th:arXiv" };
-	public static final String[] categoryListId = {"hep-lat","hep-th" };
-	public static final SimilarityMetric[] metrics = {new PreferentialAttachment(), new CommonNeighbors(), 
+	public static final String[] CATEGORY_LIST_DISCRIPTION = {"toy:mine","hep-lat:arXiv","hep-th:arXiv" };
+	public static final String[] CATEGORY_LIST_ID = {"toy","hep-lat","hep-th"};
+	public static final SimilarityMetric[] METRICS = {new PreferentialAttachment(), new CommonNeighbors(), 
 		new AdamicAdar(), new Jaccard()};
-	public static final Forecaster[] forecasters = {new RandomWalk(), new MovingAverage(2), new Average(), 
+	public static final Forecaster[] FORECASTERS = {new RandomWalk(), new MovingAverage(2), new Average(), 
 		new LinearRegression(), new LinearExponentialSmoothing(), new SimpleExponentialSmoothing()};
+	public static final LearningMethod[] LEARNING_METHODS = {new UnsupervisedLearning(), new SupervisedLearning()};
 	
 	public static String category;
 	public static int beginYear;
