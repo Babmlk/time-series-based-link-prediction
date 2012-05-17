@@ -5,6 +5,7 @@ public class Edge {
 	private String id;
 	private int source;
 	private int target;
+	private double weight;
 	
 	public Edge(String id){
 		String[] nodes = id.split("#");
@@ -17,6 +18,13 @@ public class Edge {
 		this.source = Math.min(source, target);
 		this.target = Math.max(source, target);
 		this.id = this.source + "#" + this.target;
+	}
+	
+	public Edge(Integer source, Integer target, double weight){
+		this.source = Math.min(source, target);
+		this.target = Math.max(source, target);
+		this.id = this.source + "#" + this.target;
+		this.weight = weight;
 	}
 
 	public String getId() {
@@ -58,5 +66,14 @@ public class Edge {
 	public String toString(){
 		return this.id;
 	}
+
+	public double getWeight() {
+		return weight;
+	}
+
+	public void incrWeight(double weight) {
+		this.weight += weight;
+	}
 	
+		
 }

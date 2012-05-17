@@ -84,4 +84,13 @@ public class Graph extends UndirectedSparseGraph<Integer, Edge>{
 		return temp;
 	}
 	
+	public void addWeightedEdge(Edge newEdge){
+		if(this.containsEdge(newEdge)){
+			Edge edge = this.findEdge(newEdge.getSource(), newEdge.getTarget());
+			edge.incrWeight(newEdge.getWeight());
+		}else{
+			this.addEdge(newEdge, newEdge.getSource(), newEdge.getTarget());
+		}
+	}
+	
 }
