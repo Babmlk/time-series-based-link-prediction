@@ -3,6 +3,9 @@ package learning;
 import java.io.IOException;
 import java.util.ArrayList;
 
+import org.apache.commons.math.stat.descriptive.moment.Mean;
+import org.apache.commons.math.stat.descriptive.moment.StandardDeviation;
+
 import metric.SimilarityMetric;
 import model.FTSNS;
 import model.Frame;
@@ -73,6 +76,10 @@ public class UnsupervisedLearning extends LearningMethod{
 				{null,null,null,null,null,null,null}};
 		this.absoluteResults = new ResultsBoard(lineNames, columnNames, results);
 		this.relativeResults = new ResultsBoard(lineNames, columnNames, results);
+	}
+	
+	public void teste(){
+		FrameworkUtils.experiment(s, pairsOfNodes, predictionFrame);
 	}
 	
 	
