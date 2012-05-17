@@ -14,6 +14,7 @@ import java.util.Random;
 import metric.ROC;
 import metric.SimilarityMetric;
 import model.CrossValidation;
+import model.Edge;
 import model.FTSNS;
 import model.FeatureVector;
 import model.Fold;
@@ -63,7 +64,7 @@ public class FrameworkUtils {
 		}
 		return graphs;
 	}	
-	
+
 	//Adicionar vertices faltantes aos frames
 	/*public static ArrayList<Frame> formatFrames(ArrayList<Frame> frames){
 		Frame lastFrame = frames.remove(frames.size() - 1);//Prediction frame
@@ -95,7 +96,7 @@ public class FrameworkUtils {
 			temp.clear();
 			lastIndex = i;
 		}
-				
+
 		return new ArrayList<Frame>(frames);
 	}
 
@@ -216,11 +217,11 @@ public class FrameworkUtils {
 				timeSeries.get(i).add(new TimeSeries(values,classAttribute));
 			}	
 		}
-		
+
 		for(BufferedReader reader : readers){
 			reader.close();
 		}
-		
+
 		return timeSeries;		
 	}
 
@@ -276,7 +277,7 @@ public class FrameworkUtils {
 			values = Arrays.copyOfRange(values, 0, values.length - 1);
 			featureVectors.add(new FeatureVector(values,classAttribute));				
 		}	
-		
+
 		reader.close();
 
 		return featureVectors;		
@@ -312,7 +313,7 @@ public class FrameworkUtils {
 			writer.close();
 		}		
 	}	
-	
+
 	private static Result wekaRelativeResult(Classifier classifier, Instances trainingData, Instances validationData, int folds) throws Exception{
 		Random random = new Random(); 
 		trainingData = new Instances(trainingData); 
@@ -323,7 +324,7 @@ public class FrameworkUtils {
 
 		trainingData.stratify(folds);
 		validationData.stratify(folds);
-		
+
 		double[] rates = new double[folds];
 
 		for (int i = 0; i < folds; i++) {
@@ -339,88 +340,89 @@ public class FrameworkUtils {
 
 		Mean mean = new Mean();
 		StandardDeviation sd = new StandardDeviation();
-		
+
 		return new Result(mean.evaluate(rates), sd.evaluate(rates));		
 	}
-	
+
 	private static Result wekaAbsoluteResult(Classifier classifier, Instances trainingData, Instances validationData) throws Exception{
 		Evaluation eval = new Evaluation(trainingData);
 		eval.evaluateModel(classifier, validationData);
 		return new Result(eval.areaUnderROC(1),0);
 	}
-	
+
 	private static Result wekaSVM(String trainingFilename, String validationFilename, int folds) throws Exception{
 		DataSource source = new DataSource(trainingFilename);
 		Instances trainingData = source.getDataSet();
 		if (trainingData.classIndex() == -1){
 			trainingData.setClassIndex(trainingData.numAttributes() - 1);
 		}
-		
+
 		source = new DataSource(validationFilename);
 		Instances validationData = source.getDataSet();
 		if (validationData.classIndex() == -1){
 			validationData.setClassIndex(validationData.numAttributes() - 1);
 		}
-		
+
 		SpreadSubsample ss = new SpreadSubsample();
 		ss.setDistributionSpread(1);
 		ss.setMaxCount(0);
 		ss.setRandomSeed(1);
-				
+
 		//Undersampling nos dados de teste
 		ss.setInputFormat(trainingData);
 		trainingData = Filter.useFilter(trainingData,ss);
-		
+
 		SMO smo = new SMO();
 		smo.setBuildLogisticModels(true);
-		
+
 		Result result = null;
-		
+
 		if(folds > 1){
 			result = wekaRelativeResult(smo, trainingData, validationData, folds);
 		}else{
 			smo.buildClassifier(trainingData);
 			result = wekaAbsoluteResult(smo, trainingData, validationData);
 		}		
-		
+
 		return result;
 	} 
-	
+
 	public static ResultsBoard resultsForSupervisedLearning(String trainingId, String validationId, ArrayList<Forecaster> forecasters, int folds) throws Exception{
 		String[] lineNames = {"fv","h-fv"};
 		String[] columnNames = new String[forecasters.size() + 1];
 		columnNames[forecasters.size()] = "Trad";
 		String[] methodsIds = {"","-" + HYBRID_METHOD} ;
-		
+
 		Result[][] results = new Result[methodsIds.length][columnNames.length];		
 		String trainingFilename;
 		String validationFilename;
-		
+
 		for(int i = 0; i < methodsIds.length; i++){
 			for(int j = 0; j < forecasters.size(); j++){
 				Forecaster forecaster = forecasters.get(j);
 				columnNames[j] = forecaster.getDescription();
-				
+
 				trainingFilename = Paths.assembleScoresPath(trainingId + methodsIds[i], forecaster.getDescription(), true);
 				validationFilename = Paths.assembleScoresPath(validationId + methodsIds[i], forecaster.getDescription(), true);
 				results[i][j] = wekaSVM(trainingFilename, validationFilename, folds);
 			}
 		}
-		
+
 		//Resultado gerado pela abordagem tradicional
 		trainingFilename = Paths.assembleScoresPath(trainingId, TRADITIONAL_METHOD, true);
 		validationFilename = Paths.assembleScoresPath(validationId, TRADITIONAL_METHOD, true);
 		results[0][columnNames.length - 1] = wekaSVM(trainingFilename, validationFilename, folds);
-		
+
 		return new ResultsBoard(lineNames, columnNames, results);
 	}
-	
+
 	private static Result rankingClassification(ArrayList<ROCPattern> instances, int folds){
 		ROC roc = new ROC();
 		CrossValidation cv = new CrossValidation();
 		ArrayList<Fold> foldsData = cv.getFolds(instances, folds);
-		
+
 		double[] rates = new double[folds];
+		//System.out.println("Folds = " + folds);
 
 		for (int i = 0; i < folds; i++) {
 			Fold fold = foldsData.get(i);
@@ -429,19 +431,20 @@ public class FrameworkUtils {
 
 		Mean mean = new Mean();
 		StandardDeviation sd = new StandardDeviation();
-		
+
 		return new Result(mean.evaluate(rates), sd.evaluate(rates));
-		
+
 	}
-	
+
 	public static ResultsBoard resultsForUnsupervisedLearning(String id, ArrayList<SimilarityMetric> metrics, ArrayList<Forecaster> forecasters, int folds) throws Exception{
 		String[] lineNames = new String[metrics.size()];
 		String[] columnNames = new String[forecasters.size() + 1];
 		columnNames[forecasters.size()] = TRADITIONAL_METHOD;
 		Result[][] results = new Result[lineNames.length][columnNames.length];
-		
-		
+
+
 		for(int i = 0; i < forecasters.size() + 1; i++){
+			System.out.println(i);
 			ArrayList<FeatureVector> scores = null;
 			if(i < forecasters.size()){
 				Forecaster forecaster = forecasters.get(i);
@@ -451,6 +454,7 @@ public class FrameworkUtils {
 				scores = readScores(id, TRADITIONAL_METHOD, false);
 			}
 			for(int j = 0; j < metrics.size(); j++){
+				long ini = System.currentTimeMillis();
 				SimilarityMetric metric = metrics.get(j);
 				lineNames[j] = metric.getName();
 				ArrayList<ROCPattern> instances = new ArrayList<ROCPattern>();
@@ -458,13 +462,97 @@ public class FrameworkUtils {
 					instances.add(new ROCPattern(featureVector.getScores()[j], featureVector.getClassAttribute()));
 				}
 				results[j][i] = rankingClassification(instances, folds);
+				System.out.println("Total time per metric: " + (System.currentTimeMillis() - ini)*1000 + " seconds.");
 			}			
 		}	
-		
+
 		return new ResultsBoard(lineNames, columnNames, results);
-		
+
 	}
 
+	public static void experiment(FTSNS s, ArrayList<PairOfNodes> pairs, Frame predictionFrame){
+		ArrayList<Integer> vertices = new ArrayList<Integer>(s.getWholeNetwork().getVertices());
 
+		double[] inserts = {1};
+		double[] removals = {-4,-2,-1,-0.5,0};
+		double[] conservations = {0,0.5, 1, 2,4};
+		double alpha = 0.1;
+
+		for(int in = 0; in < inserts.length; in++){
+			for(int rem = 0; rem < removals.length; rem++){
+				for(int con = 0; con < conservations.length; con++){
+					Graph g = new Graph();
+					g.addVertices(vertices);
+					int f = 0;
+					//System.out.println("i = " + inserts[in] + "; r = " + removals[rem] + " c = " + conservations[con]);
+					ArrayList<Frame> frames = new ArrayList<Frame>(s.getFrames());
+					Frame prev = frames.remove(0);
+					while(!frames.isEmpty()){
+						f++;
+						Frame current = frames.remove(0);
+						for(int i = 0; i < vertices.size(); i++){
+							for(int j = i + 1; j < vertices.size(); j++){
+								int v1 = vertices.get(i);
+								int v2 = vertices.get(j);
+								boolean wereNeighbors = false;
+								boolean areNeighbors = false;
+								if(prev.getContent().containsVertex(v1) &&
+										prev.getContent().containsVertex(v2)){
+									wereNeighbors = prev.getContent().isNeighbor(v1, v2);
+								}
+								if(current.getContent().containsVertex(v1) &&
+										current.getContent().containsVertex(v2)){
+									areNeighbors = current.getContent().isNeighbor(v1, v2);
+								}
+								double score = 0;
+								Random r = new Random();
+
+								if(!wereNeighbors && areNeighbors){
+									//Nova aresta
+									score = inserts[in];
+								}else if(wereNeighbors && !areNeighbors){
+									//Perdeu aresta
+									score = removals[rem];
+								}else if(wereNeighbors && areNeighbors){
+									//Aresta fixa
+									score = conservations[con];
+								}
+								score = score*(1 + alpha*Math.log(f+1));
+								//score = score*(1 + alpha*f);
+								
+								if(score <= -0.05 || score >= 0.05){
+									for(Integer vertex : s.getWholeNetwork().getNeighbors(v1)){
+										g.addWeightedEdge(new Edge(vertex, v2, score));
+									}
+									for(Integer vertex : s.getWholeNetwork().getNeighbors(v2)){
+										g.addWeightedEdge(new Edge(vertex, v1, score));
+									}
+								}
+							}
+						}
+						prev = current;
+					}
+
+					ArrayList<ROCPattern> instances = new ArrayList<ROCPattern>();
+					for(PairOfNodes pair : pairs){
+						Edge edge = g.findEdge(pair.getNode1(), pair.getNode2());
+						double score = 0;
+						if(edge != null){
+							score = edge.getWeight();
+						}
+						int classAttribute = 0;
+						if(predictionFrame.getContent().containsVertex(pair.getNode1()) &&
+								predictionFrame.getContent().containsVertex(pair.getNode2())){
+							classAttribute = predictionFrame.getContent().isNeighbor(pair.getNode1(), pair.getNode2()) ? 1 : 0;
+						}
+						instances.add(new ROCPattern(score, classAttribute));
+					}
+					Result result = rankingClassification(instances, 1);
+					System.out.println(result.getMeanRate());
+				}
+			}
+		}
+		System.out.println("Fim");
+	}
 
 }
