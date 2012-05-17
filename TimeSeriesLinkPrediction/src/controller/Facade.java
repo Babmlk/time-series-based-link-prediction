@@ -3,6 +3,7 @@ package controller;
 import java.util.ArrayList;
 
 import learning.LearningMethod;
+import learning.UnsupervisedLearning;
 import log.States;
 import metric.SimilarityMetric;
 import model.Frame;
@@ -65,24 +66,28 @@ public class Facade {
 			
 			//this.states.setMainState("Generating time series...");
 			System.out.println("Generating time series...");
-			learning.saveTimeSeries();
+			//learning.saveTimeSeries();
 			
 			//this.states.setMainState("Calculating traditional scores...");
 			System.out.println("Calculating traditional scores...");
-			learning.saveTraditionalScores();
+			//learning.saveTraditionalScores();
 			
 			//this.states.setMainState("Calculating predicted scores...");
 			System.out.println("Calculating predicted scores...");
-			learning.savePredictedScores();
+			//learning.savePredictedScores();
 			
 			//this.states.setMainState("Computing absolute results...");
 			System.out.println("Computing absolute results...");
-			learning.computeAbsoluteResults();
+			//learning.computeAbsoluteResults();
 			
 			if(this.statistics){
 				//this.states.setMainState("Computing relative results...");
 				System.out.println("Computing relative results...");
-				learning.computeRelativeResults(this.folds);
+				//learning.computeRelativeResults(this.folds);
+			}
+			
+			if(learning instanceof UnsupervisedLearning){
+				((UnsupervisedLearning) learning).teste();
 			}
 		}
 	}	
