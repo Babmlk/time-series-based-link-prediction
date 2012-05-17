@@ -41,13 +41,13 @@ public class SupervisedLearning extends LearningMethod{
 		ArrayList<Frame> temp = new ArrayList<Frame>(frames);
 		this.validationPredictionFrame = temp.remove(temp.size() - 1);
 		this.validationS = new FTSNS(new ArrayList<Frame>(temp));
-		this.validationPairsOfNodes = FrameworkUtils.getTestablePairOfNodes(this.validationS.getWholeNetwork());
-		System.out.println(this.validationPairsOfNodes.size() + " pairs of nodes (validation)");
+		//this.validationPairsOfNodes = FrameworkUtils.getTestablePairOfNodes(this.validationS.getWholeNetwork());
+		//System.out.println(this.validationPairsOfNodes.size() + " pairs of nodes (validation)");
 		
 		this.trainingPredictionFrame = temp.remove(temp.size() - 1);
 		this.trainingS = new FTSNS(temp);
-		this.trainingPairsOfNodes = FrameworkUtils.getTestablePairOfNodes(this.trainingS.getWholeNetwork());
-		System.out.println(this.trainingPairsOfNodes.size() + " pairs of nodes (training)");
+		//this.trainingPairsOfNodes = FrameworkUtils.getTestablePairOfNodes(this.trainingS.getWholeNetwork());
+		//System.out.println(this.trainingPairsOfNodes.size() + " pairs of nodes (training)");
 	}
 	
 	public void saveTimeSeries() throws IOException{				
