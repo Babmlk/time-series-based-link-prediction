@@ -39,8 +39,8 @@ public class UnsupervisedLearning extends LearningMethod{
 		ArrayList<Frame> temp = new ArrayList<Frame>(frames);
 		this.predictionFrame = temp.remove(temp.size() - 1);
 		this.s = new FTSNS(temp);
-		this.pairsOfNodes = FrameworkUtils.getTestablePairOfNodes(this.s.getWholeNetwork());
-		System.out.println(this.pairsOfNodes.size() + " pairs of nodes to test.");
+		//this.pairsOfNodes = FrameworkUtils.getTestablePairOfNodes(this.s.getWholeNetwork());
+		//System.out.println(this.pairsOfNodes.size() + " pairs of nodes to test.");
 	}
 	
 	public void saveTimeSeries() throws IOException{				
@@ -79,7 +79,8 @@ public class UnsupervisedLearning extends LearningMethod{
 	}
 	
 	public void teste(){
-		FrameworkUtils.experiment(s, pairsOfNodes, predictionFrame);
+		//FrameworkUtils.experiment(s, pairsOfNodes, predictionFrame);
+		FrameworkUtils.eventsStatistics(s);
 	}
 	
 	
