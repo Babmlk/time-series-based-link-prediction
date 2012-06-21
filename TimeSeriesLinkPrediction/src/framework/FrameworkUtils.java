@@ -470,13 +470,87 @@ public class FrameworkUtils {
 
 	}
 
+	private enum Event {Conservative, Innovative, Regressive}
+
+	private static Event getEvent(Frame previous, Frame current, int v1, int v2){
+		Event event = null;
+
+		boolean wereNeighbors = false;
+		boolean areNeighbors = false;
+		if(previous.getContent().containsVertex(v1) && previous.getContent().containsVertex(v2)){//Frame anterior contem os dois n—s
+			wereNeighbors = previous.getContent().isNeighbor(v1, v2);
+		}
+		if(current.getContent().containsVertex(v1) && current.getContent().containsVertex(v2)){//Frame atual contem os dois n—s
+			areNeighbors = current.getContent().isNeighbor(v1, v2);
+		}
+
+		if(!wereNeighbors && areNeighbors){
+			//Nova aresta
+			event = Event.Innovative;
+		}else if(wereNeighbors && !areNeighbors){
+			//Perdeu aresta
+			event = Event.Regressive;
+		}else if(wereNeighbors && areNeighbors){
+			//Aresta fixa
+			event = Event.Conservative;
+		}
+
+		return event;
+	}
+
+	public static void eventsStatistics(FTSNS s){
+		ArrayList<Integer> vertices = new ArrayList<Integer>(s.getWholeNetwork().getVertices());
+		ArrayList<Frame> frames = new ArrayList<Frame>(s.getFrames());
+
+		ArrayList<Integer> conservativeEvents = new ArrayList<Integer>();
+		ArrayList<Integer> innovativeEvents = new ArrayList<Integer>();
+		ArrayList<Integer> regressiveEvents = new ArrayList<Integer>();
+
+		Frame prev = frames.remove(0);
+		while(!frames.isEmpty()){
+			Frame current = frames.remove(0);
+			int in = 0;
+			int rem = 0;
+			int con = 0;
+			for(int i = 0; i < vertices.size(); i++){
+				for(int j = i + 1; j < vertices.size(); j++){
+					int v1 = vertices.get(i);
+					int v2 = vertices.get(j);
+					Event event = getEvent(prev, current, v1, v2);
+
+					if(event == Event.Innovative){
+						in++;
+					}else if(event == Event.Regressive){
+						rem++;
+					}else if(event == Event.Conservative){
+						con++;
+					}
+				}
+			}
+			System.out.println(in + " - " + rem + " - " + con);
+			innovativeEvents.add(in);
+			regressiveEvents.add(rem);
+			conservativeEvents.add(con);
+			prev = current;
+		}
+
+		System.out.println(innovativeEvents.toString());
+		System.out.println(regressiveEvents.toString());
+		System.out.println(conservativeEvents.toString());
+
+
+	}
+
 	public static void experiment(FTSNS s, ArrayList<PairOfNodes> pairs, Frame predictionFrame){
 		ArrayList<Integer> vertices = new ArrayList<Integer>(s.getWholeNetwork().getVertices());
 
 		double[] inserts = {1};
-		double[] removals = {-4,-2,-1,-0.5,0};
-		double[] conservations = {0,0.5, 1, 2,4};
-		double alpha = 0.1;
+		//double[] removals = {-4,-2,-1,-0.5,0};
+		//double[] conservations = {0,0.5, 1, 2,4};
+		double[] removals = {-1};
+		double[] conservations = {0.5};
+		double alpha = 0.8;
+		double beta = 0.1;
 
 		for(int in = 0; in < inserts.length; in++){
 			for(int rem = 0; rem < removals.length; rem++){
@@ -494,39 +568,28 @@ public class FrameworkUtils {
 							for(int j = i + 1; j < vertices.size(); j++){
 								int v1 = vertices.get(i);
 								int v2 = vertices.get(j);
-								boolean wereNeighbors = false;
-								boolean areNeighbors = false;
-								if(prev.getContent().containsVertex(v1) &&
-										prev.getContent().containsVertex(v2)){
-									wereNeighbors = prev.getContent().isNeighbor(v1, v2);
-								}
-								if(current.getContent().containsVertex(v1) &&
-										current.getContent().containsVertex(v2)){
-									areNeighbors = current.getContent().isNeighbor(v1, v2);
-								}
 								double score = 0;
-								Random r = new Random();
 
-								if(!wereNeighbors && areNeighbors){
-									//Nova aresta
+								Event event = getEvent(prev, current, v1, v2);
+
+								if(event == Event.Innovative){
 									score = inserts[in];
-								}else if(wereNeighbors && !areNeighbors){
-									//Perdeu aresta
+								}else if(event == Event.Regressive){
 									score = removals[rem];
-								}else if(wereNeighbors && areNeighbors){
-									//Aresta fixa
+								}else if(event == Event.Conservative){
 									score = conservations[con];
 								}
-								score = score*(1 + alpha*Math.log(f+1));
-								//score = score*(1 + alpha*f);
-								
+
+								score = score*(1 + beta*Math.log(f+1));
+
 								if(score <= -0.05 || score >= 0.05){
 									for(Integer vertex : s.getWholeNetwork().getNeighbors(v1)){
-										g.addWeightedEdge(new Edge(vertex, v2, score));
+										g.addWeightedEdge(new Edge(vertex, v2, alpha*score));
 									}
 									for(Integer vertex : s.getWholeNetwork().getNeighbors(v2)){
-										g.addWeightedEdge(new Edge(vertex, v1, score));
+										g.addWeightedEdge(new Edge(vertex, v1, alpha*score));
 									}
+									g.addWeightedEdge(new Edge(v1,v2,score));
 								}
 							}
 						}
